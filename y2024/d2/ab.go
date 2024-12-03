@@ -66,6 +66,7 @@ func main() {
 			// - If there are two but not next to each other, it is not almost safe
 			// - If there are two next to each other, remove the middle index and check again
 			// - If there is only one, check with removing the first as well as removing the second
+			// But this is so inelegant that I just refuse to do it. Quadratic time complexity it is.
 			for i := range levels {
 				skipped := slices.Concat(levels[:i], levels[i+1:])
 				if isSafe(skipped) {
