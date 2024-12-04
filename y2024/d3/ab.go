@@ -10,7 +10,7 @@ import (
 
 func getSimpleSum(lines []string) int {
 	sum := 0
-	re := regexp.MustCompile(`[^m]*mul\((\d+),(\d+)\).*`)
+	re := regexp.MustCompile(`mul\((\d+),(\d+)\)`)
 
 	for _, line := range lines {
 		match := re.FindStringSubmatchIndex(line)
@@ -37,7 +37,7 @@ func getSimpleSum(lines []string) int {
 func getComplexSum(lines []string) int {
 	sum := 0
 	enabled := true
-	re := regexp.MustCompile(`[^md]*(do\(\)|don\'t\(\)|mul\((\d+),(\d+)\)).*`)
+	re := regexp.MustCompile(`(do\(\)|don\'t\(\)|mul\((\d+),(\d+)\))`)
 
 	for _, line := range lines {
 		match := re.FindStringSubmatchIndex(line)
