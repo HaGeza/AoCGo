@@ -8,21 +8,8 @@ import (
 	"strings"
 )
 
-func isOrdered(node int, graph map[int](map[int]bool), predecessors map[int]bool) bool {
-	outNeighbors, exists := graph[node]
-	if exists {
-		for neighbor := range outNeighbors {
-			isPredecessor, isConsidered := predecessors[neighbor]
-			if isConsidered && isPredecessor {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func main() {
-	file, err := os.Open("data/d5/test.txt")
+	file, err := os.Open("data/d5/a.txt")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -72,22 +59,39 @@ func main() {
 			}
 		}
 
-		seenInNums := make(map[int]bool)
+		seenInds := make(map[int]int)
 		for _, num := range nums {
-			seenInNums[num] = false
+			seenInds[num] = -1
 		}
-		seenInNums[nums[0]] = true
+		seenInds[nums[0]] = 0
 
-		sorted := true
-		for _, num := range nums[1:] {
-			sorted = sorted && isOrdered(num, graph, seenInNums)
-			if !sorted {
-				break
+		correct := true
+
+	outerLoop:
+		for i := 1; i < len(nums); {
+			outNeighbors, exists := graph[nums[i]]
+			if exists {
+				for neighbor := range outNeighbors {
+					seenInd, inNums := seenInds[neighbor]
+					if inNums && seenInd > -1 && seenInd < i {
+						seenInds[neighbor] = i
+						seenInds[nums[i]] = seenInd
+						nums[i], nums[seenInd] = nums[seenInd], nums[i]
+
+						correct = false
+						i = seenInd
+						continue outerLoop
+					}
+				}
 			}
-			seenInNums[num] = true
+			seenInds[nums[i]] = i
+			i++
 		}
-		if sorted {
+
+		if correct {
 			correctSum += nums[len(nums)/2]
+		} else {
+			incorrectSum += nums[len(nums)/2]
 		}
 	}
 	fmt.Println("Correctly ordered update middle-part sum:", correctSum)
