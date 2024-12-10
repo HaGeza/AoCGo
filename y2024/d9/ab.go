@@ -20,8 +20,23 @@ type DLL struct {
 	tail *Node
 }
 
+func printDLL(dll *DLL) {
+	node := dll.head
+	for node != nil {
+		c := node.id + '0'
+		if node.free {
+			c = '.'
+		}
+		for i := 0; i < int(node.size); i++ {
+			fmt.Print(string(c))
+		}
+		node = node.next
+	}
+	fmt.Println()
+}
+
 func main() {
-	file, err := os.Open("data/d9/test.txt")
+	file, err := os.Open("data/d9/a.txt")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -89,12 +104,14 @@ outer:
 	dll.head.next = newFree
 
 	for i := 1; i < len(data); i++ {
-		pos = dll.tail.pos + int(dll.tail.size)
-		newData = &Node{size: data[i], free: false, id: i, pos: pos, prev: dll.tail}
-		dll.tail.next = newData
-		dll.tail = newData
+		if data[i] > 0 {
+			pos = dll.tail.pos + int(dll.tail.size)
+			newData = &Node{size: data[i], free: false, id: i, pos: pos, prev: dll.tail}
+			dll.tail.next = newData
+			dll.tail = newData
+		}
 
-		if i < len(free) {
+		if i < len(free) && free[i] > 0 {
 			pos = dll.tail.pos + int(dll.tail.size)
 			newFree = &Node{size: free[i], free: true, id: i, pos: pos, prev: dll.tail}
 			dll.tail.next = newFree
@@ -102,14 +119,16 @@ outer:
 		}
 	}
 
-	node := dll.head
-	for node != nil {
-		if node.free {
-			nodeToMove := dll.tail
+	nodeToMove := dll.tail
+	for nodeToMove != nil {
+		if !nodeToMove.free {
+			freeNode := dll.head
 		movingLoop:
-			for nodeToMove != nil {
-				if !nodeToMove.free && nodeToMove.size <= node.size {
-					node.size -= nodeToMove.size
+			for freeNode != nil && freeNode.pos < nodeToMove.pos {
+				if freeNode.free && nodeToMove.size <= freeNode.size {
+					movedSize := nodeToMove.size
+					movedId := nodeToMove.id
+					freeNode.size -= movedSize
 					nodeToMove.free = true
 					// Merge free space after
 					next := nodeToMove.next
@@ -120,7 +139,7 @@ outer:
 						} else {
 							dll.tail = nodeToMove
 						}
-						next = next.next
+						nodeToMove.next = next.next
 
 						next.prev, next.next = nil, nil
 					}
@@ -136,39 +155,48 @@ outer:
 						}
 
 						nodeToMove.prev, nodeToMove.next = nil, nil
+						nodeToMove = prev
 					}
 					// Add new data
 					newData = &Node{
-						size: nodeToMove.size,
+						size: movedSize,
 						free: false,
-						id:   nodeToMove.id,
-						pos:  node.pos,
-						prev: node.prev,
-						next: node,
+						id:   movedId,
+						pos:  freeNode.pos,
+						prev: freeNode.prev,
+						next: freeNode,
 					}
-					if node.prev != nil {
-						node.prev.next = newData
+					if freeNode.prev != nil {
+						freeNode.prev.next = newData
 					}
-					node.prev = newData
+					freeNode.prev = newData
 					// Remove free space if filled, otherwise update position
-					if node.size == 0 {
-						node.prev.next = node.next
-						node.prev, node.next = nil, nil
-						break movingLoop
+					if freeNode.size == 0 {
+						newData.next = freeNode.next
+						if freeNode.next != nil {
+							freeNode.next.prev = newData
+						}
+						freeNode.prev, freeNode.next = nil, nil
 					} else {
-						node.pos += int(nodeToMove.size)
+						freeNode.pos += int(movedSize)
 					}
+					break movingLoop
 				}
-				nodeToMove = nodeToMove.prev
+				freeNode = freeNode.next
 			}
 		}
-		node = node.next
+		nodeToMove = nodeToMove.prev
+		// printDLL(dll)
 	}
 
 	sum = 0
-	node = dll.head
+	node := dll.head
 	for node != nil {
-		fmt.Println(node)
+		if !node.free {
+			s := int(node.size)
+			sum += node.id * (s*node.pos + s*(s-1)/2)
+		}
 		node = node.next
 	}
+	fmt.Println("Whole move sum:", sum)
 }
